@@ -1,0 +1,23 @@
+name: Sync NFL
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * 0,1,4"
+    - cron: "0 */6 * * 2,3,5,6"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invoke Supabase NFL sync
+        env:
+          SUPABASE_FUNCTION_URL: ${{ secrets.SUPABASE_FUNCTION_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+        run: |
+          test -n "$SUPABASE_FUNCTION_URL"
+          FUNCTION_URL="$SUPABASE_FUNCTION_URL"
+          curl --fail-with-body --request POST "$FUNCTION_URL/sync-nfl" \
+            --header "authorization: Bearer $SYNC_SECRET" \
+            --header "content-type: application/json" \
+            --data '{"source":"github-actions","mode":"current"}'

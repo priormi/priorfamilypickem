@@ -1,0 +1,19 @@
+project_id = "priorfamilypickem"
+
+[functions.player-login]
+verify_jwt = false
+
+[functions.get-dashboard]
+verify_jwt = false
+
+[functions.get-pick-options]
+verify_jwt = false
+
+[functions.submit-picks]
+verify_jwt = false
+
+[functions.admin]
+verify_jwt = false
+
+[functions.sync-nfl]
+verify_jwt = false
