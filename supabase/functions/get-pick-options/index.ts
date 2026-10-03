@@ -1,6 +1,9 @@
 import { apiError, jsonResponse, optionsResponse } from "../_shared/errors.ts";
 import { requireSession } from "../_shared/supabase.ts";
 
+const ESPN_STANDINGS_URL = "https://site.web.api.espn.com/apis/v2/sports/football/nfl/standings?season=2026&seasontype=2";
+const TEAM_ABBREVIATION_MAP: Record<string, string> = { WSH: "WAS" };
+
 async function getActiveSeason(supabase: any, leagueId: string) {
   return await supabase.from("seasons").select("id, year, name, status, current_week_id").eq("league_id", leagueId).eq("status", "ACTIVE").single();
 }
@@ -27,6 +30,41 @@ function teamRecord(teamId: string, games: any[]) {
     else losses += 1;
   }
   return { wins, losses, ties };
+}
+
+function statValue(stats: any[], name: string) {
+  const stat = stats.find((item) => item.name === name);
+  return Number(stat?.value ?? 0);
+}
+
+function collectStandingsEntries(node: any, entries: any[] = []) {
+  if (Array.isArray(node?.standings?.entries)) entries.push(...node.standings.entries);
+  for (const child of node?.children ?? []) collectStandingsEntries(child, entries);
+  return entries;
+}
+
+async function fetchEspnRecords() {
+  const response = await fetch(ESPN_STANDINGS_URL, {
+    headers: {
+      accept: "application/json",
+      "user-agent": "prior-family-pickem/1.0 (+https://priormi.github.io/priorfamilypickem/)"
+    }
+  });
+  if (!response.ok) throw new Error(`ESPN standings returned ${response.status}`);
+
+  const data = await response.json();
+  const records = new Map<string, { wins: number; losses: number; ties: number }>();
+  for (const entry of collectStandingsEntries(data)) {
+    const abbreviation = TEAM_ABBREVIATION_MAP[entry.team?.abbreviation] ?? entry.team?.abbreviation;
+    if (!abbreviation) continue;
+    const stats = entry.stats ?? [];
+    records.set(abbreviation, {
+      wins: statValue(stats, "wins"),
+      losses: statValue(stats, "losses"),
+      ties: statValue(stats, "ties")
+    });
+  }
+  return records;
 }
 
 Deno.serve(async (request) => {
@@ -62,6 +100,13 @@ Deno.serve(async (request) => {
     .eq("season_id", season.id);
   if (seasonGamesError) return apiError("RECORDS_LOOKUP_FAILED", seasonGamesError.message, 500);
 
+  let espnRecords = new Map<string, { wins: number; losses: number; ties: number }>();
+  try {
+    espnRecords = await fetchEspnRecords();
+  } catch (_error) {
+    espnRecords = new Map();
+  }
+
   const { data: picks, error: picksError } = await supabase
     .from("picks")
     .select("id, game_id, team_id, source")
@@ -85,8 +130,8 @@ Deno.serve(async (request) => {
         locked: new Date(game.kickoff_at).getTime() <= now,
         selectedTeamId: pick?.team_id ?? null,
         source: pick?.source ?? null,
-        homeTeam: { ...homeTeam, record: teamRecord(homeTeam.id, seasonGames ?? []) },
-        awayTeam: { ...awayTeam, record: teamRecord(awayTeam.id, seasonGames ?? []) }
+        homeTeam: { ...homeTeam, record: espnRecords.get(homeTeam.abbreviation) ?? teamRecord(homeTeam.id, seasonGames ?? []) },
+        awayTeam: { ...awayTeam, record: espnRecords.get(awayTeam.abbreviation) ?? teamRecord(awayTeam.id, seasonGames ?? []) }
       };
     })
   });
