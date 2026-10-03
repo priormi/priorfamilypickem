@@ -1,2 +1,5 @@
-import { HomePage } from "./HomePage";
-export function PlayerHistoryPage() { return <HomePage />; }
+import { WeekHistoryPage } from "./WeekHistoryPage";
+
+export function PlayerHistoryPage() {
+  return <WeekHistoryPage />;
+}

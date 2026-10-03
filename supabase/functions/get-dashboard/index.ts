@@ -142,7 +142,26 @@ Deno.serve(async (request) => {
           else if (pick.team_id === game.winner_team_id) wins += 1;
           else losses += 1;
         }
-        return { id: participant.id, displayName: participant.display_name, wins, losses, ties, pending };
+        const pickHistory = reveal ? weekGames.map((game: any) => {
+          const pick = pickByPlayerGame.get(`${participant.id}:${game.id}`);
+          const homeTeam = Array.isArray(game.home_team) ? game.home_team[0] : game.home_team;
+          const awayTeam = Array.isArray(game.away_team) ? game.away_team[0] : game.away_team;
+          const pickedTeam = pick?.team ? (Array.isArray(pick.team) ? pick.team[0] : pick.team) : null;
+          const correct = pick && game.status === "FINAL" && !game.is_tie && game.winner_team_id
+            ? pick.team_id === game.winner_team_id
+            : null;
+          return {
+            gameId: game.id,
+            kickoffAt: game.kickoff_at,
+            status: game.status,
+            matchup: `${awayTeam?.abbreviation ?? "Away"} at ${homeTeam?.abbreviation ?? "Home"}`,
+            pickedTeam: pickedTeam ? { id: pickedTeam.id, abbreviation: pickedTeam.abbreviation, city: pickedTeam.city, name: pickedTeam.name } : null,
+            source: pick?.source ?? null,
+            correct,
+            finalScore: game.status === "FINAL" ? `${awayTeam?.abbreviation ?? "Away"} ${game.away_score ?? 0}, ${homeTeam?.abbreviation ?? "Home"} ${game.home_score ?? 0}` : null
+          };
+        }) : [];
+        return { id: participant.id, displayName: participant.display_name, wins, losses, ties, pending, picks: pickHistory };
       })
     };
   });

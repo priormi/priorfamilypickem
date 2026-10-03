@@ -54,6 +54,17 @@ export interface DashboardStanding {
   record: StandingRecord;
 }
 
+export interface WeeklyPickHistory {
+  gameId: string;
+  kickoffAt: string;
+  status: string;
+  matchup: string;
+  pickedTeam: Team | null;
+  source: "PLAYER" | "AUTO" | null;
+  correct: boolean | null;
+  finalScore: string | null;
+}
+
 export interface WeeklyPlayerResult {
   id: string;
   displayName: string;
@@ -61,6 +72,7 @@ export interface WeeklyPlayerResult {
   losses: number;
   ties: number;
   pending: number;
+  picks: WeeklyPickHistory[];
 }
 
 export interface WeeklyResult {
