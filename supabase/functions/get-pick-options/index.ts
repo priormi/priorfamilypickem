@@ -5,6 +5,19 @@ async function getActiveSeason(supabase: any, leagueId: string) {
   return await supabase.from("seasons").select("id, year, name, status, current_week_id").eq("league_id", leagueId).eq("status", "ACTIVE").single();
 }
 
+async function getCurrentWeek(supabase: any, season: any) {
+  if (season.current_week_id) {
+    return await supabase.from("weeks").select("id, display_name, status").eq("id", season.current_week_id).single();
+  }
+  return await supabase
+    .from("weeks")
+    .select("id, display_name, status")
+    .eq("season_id", season.id)
+    .order("sequence_number", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+}
+
 function teamRecord(teamId: string, games: any[]) {
   let wins = 0, losses = 0, ties = 0;
   for (const game of games) {
@@ -25,8 +38,16 @@ Deno.serve(async (request) => {
   const { data: season, error: seasonError } = await getActiveSeason(supabase, player.league_id);
   if (seasonError) return apiError("NO_ACTIVE_SEASON", seasonError.message, 404);
 
-  const { data: week, error: weekError } = await supabase.from("weeks").select("id, display_name, status").eq("id", season.current_week_id).single();
+  const { data: week, error: weekError } = await getCurrentWeek(supabase, season);
   if (weekError) return apiError("WEEK_LOOKUP_FAILED", weekError.message, 500);
+
+  if (!week) {
+    return jsonResponse({
+      season: { id: season.id, year: season.year, name: season.name },
+      week: { id: null, displayName: "Schedule not synced yet", status: "UPCOMING" },
+      games: []
+    });
+  }
 
   const { data: games, error: gamesError } = await supabase
     .from("games")

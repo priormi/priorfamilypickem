@@ -5,6 +5,19 @@ async function getActiveSeason(supabase: any, leagueId: string) {
   return await supabase.from("seasons").select("id, year, name, status, current_week_id").eq("league_id", leagueId).eq("status", "ACTIVE").single();
 }
 
+async function getCurrentWeek(supabase: any, season: any) {
+  if (season.current_week_id) {
+    return await supabase.from("weeks").select("id, display_name, status").eq("id", season.current_week_id).single();
+  }
+  return await supabase
+    .from("weeks")
+    .select("id, display_name, status")
+    .eq("season_id", season.id)
+    .order("sequence_number", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+}
+
 async function autoPickStartedGames(supabase: any, seasonId: string, leagueId: string) {
   const nowIso = new Date().toISOString();
   const { data: players, error: playersError } = await supabase.from("players").select("id").eq("league_id", leagueId).eq("active", true);
@@ -53,7 +66,7 @@ Deno.serve(async (request) => {
   const auto = await autoPickStartedGames(supabase, season.id, player.league_id);
   if ("error" in auto) return apiError("AUTO_PICK_FAILED", auto.error.message, 500);
 
-  const { data: week, error: weekError } = await supabase.from("weeks").select("id, display_name, status").eq("id", season.current_week_id).single();
+  const { data: week, error: weekError } = await getCurrentWeek(supabase, season);
   if (weekError) return apiError("WEEK_LOOKUP_FAILED", weekError.message, 500);
   const { data: players, error: playersError } = await supabase.from("players").select("id, display_name, is_admin, active").eq("league_id", player.league_id).eq("active", true).order("display_name");
   if (playersError) return apiError("PLAYERS_LOOKUP_FAILED", playersError.message, 500);
@@ -69,7 +82,7 @@ Deno.serve(async (request) => {
     .in("player_id", (players ?? []).map((p: any) => p.id));
   if (picksError) return apiError("PICKS_LOOKUP_FAILED", picksError.message, 500);
 
-  const currentWeekGames = (games ?? []).filter((game: any) => game.week_id === week.id);
+  const currentWeekGames = week ? (games ?? []).filter((game: any) => game.week_id === week.id) : [];
   const expectedCurrentPicks = (players ?? []).length * currentWeekGames.length;
   const currentPickCount = (picks ?? []).filter((pick: any) => currentWeekGames.some((game: any) => game.id === pick.game_id)).length;
   const currentWeekComplete = expectedCurrentPicks > 0 && currentPickCount >= expectedCurrentPicks;
@@ -126,7 +139,14 @@ Deno.serve(async (request) => {
 
   return jsonResponse({
     season: { id: season.id, year: season.year, name: season.name },
-    currentWeek: { id: week.id, displayName: week.display_name, status: week.status, complete: currentWeekComplete, submittedPicks: currentPickCount, expectedPicks: expectedCurrentPicks },
+    currentWeek: {
+      id: week?.id ?? null,
+      displayName: week?.display_name ?? "Schedule not synced yet",
+      status: week?.status ?? "UPCOMING",
+      complete: currentWeekComplete,
+      submittedPicks: currentPickCount,
+      expectedPicks: expectedCurrentPicks
+    },
     player: { id: player.id, displayName: player.display_name, isAdmin: player.is_admin },
     standings,
     weeklyResults
