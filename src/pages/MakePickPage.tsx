@@ -50,7 +50,7 @@ export function MakePickPage() {
   const [options, setOptions] = useState<PickOptionsResponse | null>(null);
   const [selected, setSelected] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [savedDialogOpen, setSavedDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -68,13 +68,13 @@ export function MakePickPage() {
     if (!auth.token || !options) return;
     setSaving(true);
     setError(null);
-    setMessage(null);
+    setSavedDialogOpen(false);
     try {
       const picks = unlockedGames.map((game) => ({ gameId: game.id, teamId: selected[game.id] })).filter((pick) => pick.teamId);
-      const result = await submitPicks(auth.token, picks);
-      setMessage(`Saved ${result.saved} picks.`);
+      await submitPicks(auth.token, picks);
       const refreshed = await getPickOptions(auth.token);
       setOptions(refreshed);
+      setSavedDialogOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save picks.");
     } finally {
@@ -93,13 +93,28 @@ export function MakePickPage() {
         <Link className="rounded-lg border border-slate-300 px-4 py-2 font-bold text-slate-700" to="/">Dashboard</Link>
       </div>
       {error ? <p className="mt-4 rounded-md bg-red-50 p-3 font-semibold text-red-800">{error}</p> : null}
-      {message ? <p className="mt-4 rounded-md bg-green-50 p-3 font-semibold text-green-800">{message}</p> : null}
       <div className="mt-4 grid gap-3">
         {options.games.map((game) => <GameCard game={game} key={game.id} selectedTeamId={selected[game.id]} onPick={(gameId, teamId) => setSelected((current) => ({ ...current, [gameId]: teamId }))} />)}
       </div>
       <div className="sticky bottom-0 -mx-5 mt-5 border-t border-slate-200 bg-white p-5">
         <button className="w-full rounded-lg bg-teal-700 px-4 py-3 font-bold text-white hover:bg-teal-800 disabled:opacity-60" disabled={saving || !ready || !unlockedGames.length} onClick={save}>{saving ? "Saving..." : "Save Picks"}</button>
       </div>
+      {savedDialogOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 px-4" role="dialog" aria-modal="true" aria-labelledby="picks-saved-title">
+          <div className="w-full max-w-sm rounded-lg bg-white p-6 text-center shadow-xl">
+            <h3 className="text-2xl font-black text-slate-900" id="picks-saved-title">Picks Saved</h3>
+            <p className="mt-2 text-slate-600">Your picks have been saved.</p>
+            <button
+              autoFocus
+              className="mt-5 w-full rounded-lg bg-teal-700 px-4 py-3 text-lg font-bold text-white hover:bg-teal-800"
+              onClick={() => setSavedDialogOpen(false)}
+              type="button"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
