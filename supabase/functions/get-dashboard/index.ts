@@ -87,10 +87,20 @@ Deno.serve(async (request) => {
   const currentPickCount = (picks ?? []).filter((pick: any) => currentWeekGames.some((game: any) => game.id === pick.game_id)).length;
   const currentWeekComplete = expectedCurrentPicks > 0 && currentPickCount >= expectedCurrentPicks;
   const pickByPlayerGame = new Map((picks ?? []).map((pick: any) => [`${pick.player_id}:${pick.game_id}`, pick]));
+  const gamesByWeek = new Map<string, any[]>();
+  for (const game of games ?? []) {
+    gamesByWeek.set(game.week_id, [...(gamesByWeek.get(game.week_id) ?? []), game]);
+  }
+  const revealedWeekIds = new Set<string>();
+  for (const [weekId, weekGames] of gamesByWeek.entries()) {
+    const expected = (players ?? []).length * weekGames.length;
+    const count = (picks ?? []).filter((pick: any) => weekGames.some((game: any) => game.id === pick.game_id)).length;
+    if (expected > 0 && count >= expected) revealedWeekIds.add(weekId);
+  }
 
   const standings = (players ?? []).map((participant: any) => {
     const record = emptyRecord();
-    for (const game of games ?? []) {
+    for (const game of (games ?? []).filter((item: any) => revealedWeekIds.has(item.week_id))) {
       const pick = pickByPlayerGame.get(`${participant.id}:${game.id}`);
       if (!pick) continue;
       if (game.status !== "FINAL" || !game.winner_team_id && !game.is_tie) {
@@ -114,7 +124,7 @@ Deno.serve(async (request) => {
   })).values()).sort((a: any, b: any) => a.sequence_number - b.sequence_number);
 
   const weeklyResults = weeks.map((weekRecord: any) => {
-    const weekGames = (games ?? []).filter((game: any) => game.week_id === weekRecord.id);
+    const weekGames = gamesByWeek.get(weekRecord.id) ?? [];
     const expected = (players ?? []).length * weekGames.length;
     const count = (picks ?? []).filter((pick: any) => weekGames.some((game: any) => game.id === pick.game_id)).length;
     const reveal = expected > 0 && count >= expected;
