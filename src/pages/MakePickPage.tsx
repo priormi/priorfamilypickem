@@ -34,6 +34,12 @@ function GameCard({ game, selectedTeamId, onPick }: { game: PickGame; selectedTe
               onClick={() => onPick(game.id, team.id)}
               type="button"
             >
+              {selected ? (
+                <span className="inline-flex w-full items-center justify-center gap-1 rounded bg-teal-700 px-2 py-1.5 text-xs font-black uppercase text-white">
+                  <CheckCircle aria-hidden="true" className="h-3.5 w-3.5" />
+                  Currently selected
+                </span>
+              ) : null}
               <div className="flex items-center gap-3">
                 <TeamLogo abbreviation={team.abbreviation} name={`${team.city} ${team.name}`} />
                 <div className="min-w-0">
@@ -41,12 +47,6 @@ function GameCard({ game, selectedTeamId, onPick }: { game: PickGame; selectedTe
                   <p className="text-sm font-semibold text-slate-500">{recordText(team.record)}</p>
                 </div>
               </div>
-              {selected ? (
-                <span className="inline-flex items-center gap-1 self-start rounded bg-teal-700 px-2 py-1 text-xs font-black uppercase text-white">
-                  <CheckCircle aria-hidden="true" className="h-3.5 w-3.5" />
-                  Currently selected
-                </span>
-              ) : null}
             </button>
           );
         }).flatMap((node, index) => index === 0 ? [node, <span className="self-center px-2 text-center text-sm font-black text-slate-400" key="at">AT</span>] : [node])}
