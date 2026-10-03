@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { CheckCircle } from "lucide-react";
 import { Link, Navigate } from "react-router-dom";
 import { TeamLogo } from "../components/TeamLogo";
 import { useAuth } from "../hooks/useAuth";
@@ -26,17 +27,26 @@ function GameCard({ game, selectedTeamId, onPick }: { game: PickGame; selectedTe
           const selected = selectedTeamId === team.id;
           return (
             <button
-              className={`flex items-center gap-3 rounded-lg border p-3 text-left transition disabled:cursor-not-allowed ${selected ? "border-teal-700 bg-teal-50 ring-2 ring-teal-100" : game.locked ? "border-slate-200 bg-slate-100 text-slate-500" : "border-slate-200 bg-white hover:border-teal-300 hover:bg-teal-50"}`}
+              aria-pressed={selected}
+              className={`flex min-h-[104px] flex-col items-stretch justify-center gap-2 rounded-lg border-2 p-3 text-left transition disabled:cursor-not-allowed ${selected ? "border-teal-700 bg-teal-50 shadow-sm ring-4 ring-teal-100" : game.locked ? "border-slate-200 bg-slate-100 text-slate-500" : "border-slate-200 bg-white hover:border-teal-300 hover:bg-teal-50"}`}
               disabled={game.locked}
               key={team.id}
               onClick={() => onPick(game.id, team.id)}
               type="button"
             >
-              <TeamLogo abbreviation={team.abbreviation} name={`${team.city} ${team.name}`} />
-              <div className="min-w-0">
-                <p className="font-bold leading-tight">{team.city} {team.name}</p>
-                <p className="text-sm font-semibold text-slate-500">{recordText(team.record)}</p>
+              <div className="flex items-center gap-3">
+                <TeamLogo abbreviation={team.abbreviation} name={`${team.city} ${team.name}`} />
+                <div className="min-w-0">
+                  <p className="font-bold leading-tight">{team.city} {team.name}</p>
+                  <p className="text-sm font-semibold text-slate-500">{recordText(team.record)}</p>
+                </div>
               </div>
+              {selected ? (
+                <span className="inline-flex items-center gap-1 self-start rounded bg-teal-700 px-2 py-1 text-xs font-black uppercase text-white">
+                  <CheckCircle aria-hidden="true" className="h-3.5 w-3.5" />
+                  Currently selected
+                </span>
+              ) : null}
             </button>
           );
         }).flatMap((node, index) => index === 0 ? [node, <span className="self-center px-2 text-center text-sm font-black text-slate-400" key="at">AT</span>] : [node])}
