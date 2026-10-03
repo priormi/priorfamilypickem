@@ -86,6 +86,13 @@ Deno.serve(async (request) => {
   const expectedCurrentPicks = (players ?? []).length * currentWeekGames.length;
   const currentPickCount = (picks ?? []).filter((pick: any) => currentWeekGames.some((game: any) => game.id === pick.game_id)).length;
   const currentWeekComplete = expectedCurrentPicks > 0 && currentPickCount >= expectedCurrentPicks;
+  const currentGameIds = new Set(currentWeekGames.map((game: any) => game.id));
+  const pickProgress = (players ?? []).map((participant: any) => ({
+    id: participant.id,
+    displayName: participant.display_name,
+    submittedPicks: (picks ?? []).filter((pick: any) => pick.player_id === participant.id && currentGameIds.has(pick.game_id)).length,
+    expectedPicks: currentWeekGames.length
+  }));
   const pickByPlayerGame = new Map((picks ?? []).map((pick: any) => [`${pick.player_id}:${pick.game_id}`, pick]));
   const gamesByWeek = new Map<string, any[]>();
   for (const game of games ?? []) {
@@ -174,7 +181,8 @@ Deno.serve(async (request) => {
       status: week?.status ?? "UPCOMING",
       complete: currentWeekComplete,
       submittedPicks: currentPickCount,
-      expectedPicks: expectedCurrentPicks
+      expectedPicks: expectedCurrentPicks,
+      pickProgress
     },
     player: { id: player.id, displayName: player.display_name, isAdmin: player.is_admin },
     standings,

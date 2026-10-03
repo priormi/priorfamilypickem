@@ -82,9 +82,16 @@ export interface WeeklyResult {
   players: WeeklyPlayerResult[];
 }
 
+export interface CurrentWeekPickProgress {
+  id: string;
+  displayName: string;
+  submittedPicks: number;
+  expectedPicks: number;
+}
+
 export interface DashboardResponse {
   season: { id: string; year: number; name: string };
-  currentWeek: { id: string; displayName: string; status: string; complete: boolean; submittedPicks: number; expectedPicks: number };
+  currentWeek: { id: string | null; displayName: string; status: string; complete: boolean; submittedPicks: number; expectedPicks: number; pickProgress: CurrentWeekPickProgress[] };
   player: SessionPlayer;
   standings: DashboardStanding[];
   weeklyResults: WeeklyResult[];
