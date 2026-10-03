@@ -5,7 +5,6 @@ import { useAuth } from "../hooks/useAuth";
 const links = [
   ["/", "Home"],
   ["/pick", "Pick"],
-  ["/standings", "Standings"],
   ["/history", "History"],
   ["/admin", "Admin"]
 ];
