@@ -10,7 +10,6 @@ export function AppShell({ children }: PropsWithChildren) {
             <p className="text-sm uppercase tracking-wide text-teal-100">NFL Pick'em</p>
             <h1 className="text-lg font-bold">Prior Family Pick'em</h1>
           </div>
-          <p className="text-sm text-teal-100">America/Chicago</p>
         </div>
       </header>
       <Navigation />
