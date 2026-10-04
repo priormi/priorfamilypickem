@@ -86,7 +86,9 @@ export function HomePage() {
           <div className="mt-3 divide-y divide-slate-100">
             {dashboard.standings.map((standing, index) => (
               <div className="flex items-center justify-between gap-3 py-3" key={standing.id}>
-                <p className="font-bold">{index + 1}. {standing.displayName}</p>
+                <Link className="font-bold text-teal-700 hover:text-teal-800 hover:underline" to={`/history?player=${standing.id}`}>
+                  {index + 1}. {standing.displayName}
+                </Link>
                 <p className="text-lg font-black text-slate-900">{recordText(standing.record)}</p>
               </div>
             ))}

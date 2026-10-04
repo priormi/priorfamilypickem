@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { getDashboard } from "../services/dashboard";
 import type { DashboardResponse, WeeklyPickHistory, WeeklyPlayerResult } from "../types";
@@ -55,6 +55,8 @@ type HistoryMode = "week" | "player";
 
 export function WeekHistoryPage() {
   const auth = useAuth();
+  const [searchParams] = useSearchParams();
+  const selectedPlayerId = searchParams.get("player");
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [mode, setMode] = useState<HistoryMode>("week");
   const [expandedWeekIds, setExpandedWeekIds] = useState<Set<string>>(() => new Set());
@@ -65,6 +67,17 @@ export function WeekHistoryPage() {
     if (!auth.token) return;
     getDashboard(auth.token).then(setDashboard).catch((err) => setError(err instanceof Error ? err.message : "Unable to load history."));
   }, [auth.token]);
+
+  useEffect(() => {
+    if (!selectedPlayerId) return;
+    setMode("player");
+    setExpandedPlayerIds((current) => {
+      if (current.has(selectedPlayerId)) return current;
+      const next = new Set(current);
+      next.add(selectedPlayerId);
+      return next;
+    });
+  }, [selectedPlayerId]);
 
   if (!auth.token) return <Navigate to="/login" replace />;
   if (error) return <section className="rounded-lg border border-red-200 bg-red-50 p-5 font-semibold text-red-800">{error}</section>;
