@@ -6,10 +6,7 @@ export function AppShell({ children }: PropsWithChildren) {
     <div className="min-h-screen bg-teal-50 text-slate-900">
       <header className="bg-teal-900 px-4 py-4 text-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-          <div>
-            <p className="text-sm uppercase tracking-wide text-teal-100">NFL Pick'em</p>
-            <h1 className="text-lg font-bold">Prior Family Pick'em</h1>
-          </div>
+          <h1 className="text-2xl font-black sm:text-3xl">Prior Family Pick'em</h1>
         </div>
       </header>
       <Navigation />
