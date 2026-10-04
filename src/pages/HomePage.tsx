@@ -25,6 +25,7 @@ export function HomePage() {
   const remaining = Math.max(0, dashboard.currentWeek.expectedPicks - dashboard.currentWeek.submittedPicks);
   const myPickProgress = dashboard.currentWeek.pickProgress.find((participant) => participant.id === dashboard.player.id);
   const pickButtonText = myPickProgress && myPickProgress.expectedPicks > 0 && myPickProgress.submittedPicks >= myPickProgress.expectedPicks ? "Change Picks" : "Make Picks";
+  const lastCompletedWeek = [...dashboard.weeklyResults].reverse().find((week) => week.complete);
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
@@ -81,13 +82,11 @@ export function HomePage() {
 
         <div className="rounded-lg border border-slate-200 bg-white p-5">
           <h2 className="text-xl font-bold">Season Standings</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">Through {lastCompletedWeek?.displayName ?? "no completed weeks"}</p>
           <div className="mt-3 divide-y divide-slate-100">
             {dashboard.standings.map((standing, index) => (
               <div className="flex items-center justify-between gap-3 py-3" key={standing.id}>
-                <div>
-                  <p className="font-bold">{index + 1}. {standing.displayName}</p>
-                  <p className="text-sm text-slate-500">{standing.record.pending} pending</p>
-                </div>
+                <p className="font-bold">{index + 1}. {standing.displayName}</p>
                 <p className="text-lg font-black text-slate-900">{recordText(standing.record)}</p>
               </div>
             ))}
