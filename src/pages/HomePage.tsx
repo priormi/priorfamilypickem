@@ -23,6 +23,8 @@ export function HomePage() {
   if (!dashboard) return <section className="rounded-lg border border-slate-200 bg-white p-5">Loading league...</section>;
 
   const remaining = Math.max(0, dashboard.currentWeek.expectedPicks - dashboard.currentWeek.submittedPicks);
+  const myPickProgress = dashboard.currentWeek.pickProgress.find((participant) => participant.id === dashboard.player.id);
+  const pickButtonText = myPickProgress && myPickProgress.expectedPicks > 0 && myPickProgress.submittedPicks >= myPickProgress.expectedPicks ? "Change Picks" : "Make Picks";
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
@@ -33,7 +35,7 @@ export function HomePage() {
           {dashboard.currentWeek.complete ? "All picks are in. Picks are visible." : `${remaining} picks still out. Picks stay hidden until everyone is in.`}
         </p>
         <div className="mt-5">
-          <Link className="block rounded-lg bg-teal-700 px-4 py-3 text-center font-bold text-white hover:bg-teal-800" to="/pick">Make Picks</Link>
+          <Link className="block rounded-lg bg-teal-700 px-4 py-3 text-center font-bold text-white hover:bg-teal-800" to="/pick">{pickButtonText}</Link>
         </div>
       </section>
 

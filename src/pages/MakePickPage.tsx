@@ -20,7 +20,7 @@ function GameCard({ game, selectedTeamId, onPick }: { game: PickGame; selectedTe
     <article className="rounded-lg border border-slate-200 bg-slate-50 p-3">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-bold text-slate-700">{formatKickoff(game.kickoffAt)}</p>
-        <span className="rounded bg-white px-2 py-1 text-xs font-bold uppercase text-slate-500">{game.locked ? "Locked" : game.status}</span>
+        <span className={`rounded px-2 py-1 text-xs font-bold uppercase ${game.locked ? "bg-yellow-100 text-yellow-800" : "bg-white text-slate-500"}`}>{game.locked ? "Locked" : game.status}</span>
       </div>
       <div className="grid gap-2 md:grid-cols-[1fr_auto_1fr] md:items-center">
         {teams.map((team, index) => {
