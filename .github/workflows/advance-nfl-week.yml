@@ -1,0 +1,21 @@
+name: Advance NFL Week
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 14 * * 2"
+
+jobs:
+  advance-week:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync next NFL week
+        env:
+          SUPABASE_FUNCTION_URL: ${{ secrets.SUPABASE_FUNCTION_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+        run: |
+          test -n "$SUPABASE_FUNCTION_URL"
+          curl --fail-with-body --request POST "$SUPABASE_FUNCTION_URL/sync-nfl" \
+            --header "authorization: Bearer $SYNC_SECRET" \
+            --header "content-type: application/json" \
+            --data '{"source":"github-actions","mode":"next"}'

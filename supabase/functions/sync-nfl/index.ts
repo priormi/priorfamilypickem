@@ -95,20 +95,29 @@ async function weeksToSync(body: Record<string, unknown>, now = new Date()) {
     : [];
 
   if (requestedWeeks.length) return [...new Set(requestedWeeks)];
-  if (body.mode !== "current") return Array.from({ length: WEEK_COUNT }, (_, index) => index + 1);
+
+  const mode = String(body.mode ?? "");
+  if (mode !== "current" && mode !== "next") return Array.from({ length: WEEK_COUNT }, (_, index) => index + 1);
 
   const weekOneData = await fetchWeek(1);
-  const entries = regularSeasonEntries(weekOneData);
-  const currentEntry = entries.find((entry) => {
+  const entries = regularSeasonEntries(weekOneData).sort((a, b) => Number(a.value) - Number(b.value));
+  const nowTime = now.getTime();
+  const currentIndex = entries.findIndex((entry) => {
     const start = new Date(entry.startDate).getTime();
     const end = new Date(entry.endDate).getTime();
-    return now.getTime() >= start && now.getTime() <= end;
+    return nowTime >= start && nowTime <= end;
   });
 
-  if (currentEntry) return [Number(currentEntry.value)];
+  if (mode === "current") {
+    if (currentIndex >= 0) return [Number(entries[currentIndex].value)];
+    const nextEntry = entries.find((entry) => new Date(entry.endDate).getTime() > nowTime);
+    return [Number(nextEntry?.value ?? 1)];
+  }
 
-  const nextEntry = entries.find((entry) => new Date(entry.endDate).getTime() > now.getTime());
-  return [Number(nextEntry?.value ?? 1)];
+  const nextEntry = currentIndex >= 0
+    ? entries[currentIndex + 1]
+    : entries.find((entry) => new Date(entry.startDate).getTime() > nowTime) ?? entries.find((entry) => new Date(entry.endDate).getTime() > nowTime);
+  return [Number(nextEntry?.value ?? WEEK_COUNT)];
 }
 
 async function runSync(request: Request) {
