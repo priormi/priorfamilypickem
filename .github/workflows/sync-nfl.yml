@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       week:
-        description: "NFL week number to sync, or blank for Week 5"
+        description: "NFL week number to sync, or blank for current"
         required: false
         type: string
   schedule:
@@ -20,14 +20,11 @@ jobs:
           SUPABASE_FUNCTION_URL: ${{ secrets.SUPABASE_FUNCTION_URL }}
           SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
           REQUESTED_WEEK: ${{ github.event.inputs.week }}
-          EVENT_NAME: ${{ github.event_name }}
         run: |
           test -n "$SUPABASE_FUNCTION_URL"
           FUNCTION_URL="$SUPABASE_FUNCTION_URL"
           if [ -n "$REQUESTED_WEEK" ]; then
             PAYLOAD="{\"source\":\"github-actions\",\"weeks\":[${REQUESTED_WEEK}]}"
-          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            PAYLOAD="{\"source\":\"github-actions\",\"weeks\":[5]}"
           else
             PAYLOAD='{"source":"github-actions","mode":"current"}'
           fi

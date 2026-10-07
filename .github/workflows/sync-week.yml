@@ -1,0 +1,45 @@
+name: Sync NFL Week
+
+on:
+  workflow_dispatch:
+    inputs:
+      week:
+        description: "NFL week number to sync"
+        required: true
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+          - "5"
+          - "6"
+          - "7"
+          - "8"
+          - "9"
+          - "10"
+          - "11"
+          - "12"
+          - "13"
+          - "14"
+          - "15"
+          - "16"
+          - "17"
+          - "18"
+
+jobs:
+  sync-week:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invoke Supabase NFL week sync
+        env:
+          SUPABASE_FUNCTION_URL: ${{ secrets.SUPABASE_FUNCTION_URL }}
+          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+          REQUESTED_WEEK: ${{ github.event.inputs.week }}
+        run: |
+          test -n "$SUPABASE_FUNCTION_URL"
+          test -n "$REQUESTED_WEEK"
+          curl --fail-with-body --request POST "$SUPABASE_FUNCTION_URL/sync-nfl" \
+            --header "authorization: Bearer $SYNC_SECRET" \
+            --header "content-type: application/json" \
+            --data "{\"source\":\"github-actions\",\"weeks\":[${REQUESTED_WEEK}]}"
