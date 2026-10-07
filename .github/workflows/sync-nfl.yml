@@ -2,6 +2,11 @@ name: Sync NFL
 
 on:
   workflow_dispatch:
+    inputs:
+      week:
+        description: "NFL week number to sync, or blank for current"
+        required: false
+        type: string
   schedule:
     - cron: "*/15 * * * 0,1,4"
     - cron: "0 */6 * * 2,3,5,6"
@@ -14,10 +19,16 @@ jobs:
         env:
           SUPABASE_FUNCTION_URL: ${{ secrets.SUPABASE_FUNCTION_URL }}
           SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+          REQUESTED_WEEK: ${{ github.event.inputs.week }}
         run: |
           test -n "$SUPABASE_FUNCTION_URL"
           FUNCTION_URL="$SUPABASE_FUNCTION_URL"
+          if [ -n "$REQUESTED_WEEK" ]; then
+            PAYLOAD="{\"source\":\"github-actions\",\"weeks\":[${REQUESTED_WEEK}]}"
+          else
+            PAYLOAD='{"source":"github-actions","mode":"current"}'
+          fi
           curl --fail-with-body --request POST "$FUNCTION_URL/sync-nfl" \
             --header "authorization: Bearer $SYNC_SECRET" \
             --header "content-type: application/json" \
-            --data '{"source":"github-actions","mode":"current"}'
+            --data "$PAYLOAD"
