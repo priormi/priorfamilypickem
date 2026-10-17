@@ -3,6 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { getDashboard } from "../services/dashboard";
 import type { DashboardResponse } from "../types";
+import { showWeekOnHomepage } from "../utils/weeklyResults";
 
 function recordText(record: { wins: number; losses: number; ties: number }) {
   return record.ties ? `${record.wins}-${record.losses}-${record.ties}` : `${record.wins}-${record.losses}`;
@@ -12,6 +13,22 @@ export function HomePage() {
   const auth = useAuth();
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    function updateTime() {
+      setNow(new Date());
+      timer = setTimeout(updateTime, 60_000 - Date.now() % 60_000);
+    }
+    updateTime();
+    window.addEventListener("focus", updateTimeOnFocus);
+    function updateTimeOnFocus() { setNow(new Date()); }
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("focus", updateTimeOnFocus);
+    };
+  }, []);
 
   useEffect(() => {
     if (!auth.token) return;
@@ -26,6 +43,7 @@ export function HomePage() {
   const myPickProgress = dashboard.currentWeek.pickProgress.find((participant) => participant.id === dashboard.player.id);
   const pickButtonText = myPickProgress && myPickProgress.expectedPicks > 0 && myPickProgress.submittedPicks >= myPickProgress.expectedPicks ? "Change Picks" : "Make Picks";
   const lastCompletedWeek = [...dashboard.weeklyResults].reverse().find((week) => week.complete);
+  const homepageWeeks = dashboard.weeklyResults.filter((week) => showWeekOnHomepage(week, now));
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
@@ -69,7 +87,8 @@ export function HomePage() {
         <div className="rounded-lg border border-slate-200 bg-white p-5">
           <h2 className="text-xl font-bold">Weekly Results</h2>
           <div className="mt-4 grid gap-3">
-            {dashboard.weeklyResults.map((week) => (
+            {!homepageWeeks.length ? <p className="text-sm text-slate-500">No weekly results to show. Completed weeks are available in <Link className="font-semibold text-teal-700 hover:underline" to="/history">Pick History</Link>.</p> : null}
+            {homepageWeeks.map((week) => (
               <article className="rounded-lg border border-slate-200 p-4" key={week.id}>
                 <div className="flex items-center justify-between gap-3">
                   <h3 className="font-bold">{week.displayName}</h3>
