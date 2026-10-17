@@ -6,8 +6,8 @@ import { getDashboard } from "../services/dashboard";
 import type { DashboardResponse, WeeklyPickHistory, WeeklyPlayerResult } from "../types";
 
 function pickResult(pick: WeeklyPickHistory) {
-  if (pick.correct === true) return "Correct";
-  if (pick.correct === false) return "Missed";
+  if (pick.correct === true) return "Win";
+  if (pick.correct === false) return "Loss";
   if (pick.status === "FINAL") return "Tie";
   return "Pending";
 }
@@ -25,7 +25,14 @@ function PickRows({ picks }: { picks: WeeklyPickHistory[] }) {
         <div className="grid gap-1 py-2" key={pick.gameId}>
           <div className="flex items-center justify-between gap-3">
             <span className="font-semibold text-slate-700">{pick.matchup}</span>
-            <span className="font-bold text-slate-900">{pick.pickedTeam?.abbreviation ?? "No pick"}</span>
+            <span className="flex shrink-0 items-center gap-2">
+              <span className="font-bold text-slate-900">{pick.pickedTeam?.abbreviation ?? "No pick"}</span>
+              {pick.correct === true || pick.correct === false ? (
+                <span className={`rounded px-2 py-0.5 text-xs font-bold ${pick.correct ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                  {pickResult(pick)}
+                </span>
+              ) : null}
+            </span>
           </div>
           <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
             <span>{pick.source === "AUTO" ? "Auto-picked" : "Picked"}</span>
