@@ -72,7 +72,7 @@ export function HomePage() {
                 </div>
                 <div className="mt-3 divide-y divide-slate-100 text-sm">
                   {week.complete
-                    ? week.players.map((player) => <p className="flex justify-between py-2" key={player.id}><span>{player.displayName}</span><span className="font-bold">{recordText(player)}</span></p>)
+                    ? [...week.players].sort((a, b) => b.wins - a.wins || a.displayName.localeCompare(b.displayName)).map((player) => <p className="flex justify-between py-2" key={player.id}><span>{player.displayName}</span><span className="font-bold">{recordText(player)}</span></p>)
                     : <p className="py-2 font-semibold text-slate-500">Waiting on all picks</p>}
                 </div>
               </article>
