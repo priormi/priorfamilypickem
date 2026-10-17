@@ -24,8 +24,9 @@ async function autoPickStartedGames(supabase: any, seasonId: string, leagueId: s
   if (playersError) return { error: playersError };
   const { data: games, error: gamesError } = await supabase
     .from("games")
-    .select("id, home_team_id, away_team_id")
+    .select("id, home_team_id, away_team_id, week:weeks!inner(week_code)")
     .eq("season_id", seasonId)
+    .neq("week.week_code", "WEEK_4")
     .lte("kickoff_at", nowIso)
     .in("status", ["SCHEDULED", "IN_PROGRESS", "FINAL"]);
   if (gamesError) return { error: gamesError };
@@ -72,8 +73,10 @@ Deno.serve(async (request) => {
   if (playersError) return apiError("PLAYERS_LOOKUP_FAILED", playersError.message, 500);
   const { data: games, error: gamesError } = await supabase
     .from("games")
-    .select("id, week_id, kickoff_at, status, home_score, away_score, winner_team_id, is_tie, week:weeks(id, display_name, sequence_number), home_team:teams!games_home_team_id_fkey(id, abbreviation, city, name), away_team:teams!games_away_team_id_fkey(id, abbreviation, city, name)")
+    .select("id, week_id, kickoff_at, status, home_score, away_score, winner_team_id, is_tie, week:weeks!inner(id, display_name, sequence_number, week_code), home_team:teams!games_home_team_id_fkey(id, abbreviation, city, name), away_team:teams!games_away_team_id_fkey(id, abbreviation, city, name)")
     .eq("season_id", season.id)
+    // Week 4 is excluded from league results, history, and season scoring.
+    .neq("week.week_code", "WEEK_4")
     .order("kickoff_at", { ascending: true });
   if (gamesError) return apiError("GAMES_LOOKUP_FAILED", gamesError.message, 500);
   const { data: picks, error: picksError } = await supabase
