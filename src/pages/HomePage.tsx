@@ -45,16 +45,21 @@ export function HomePage() {
         <div className="mt-4 grid gap-3">
           <div className="rounded-lg bg-slate-50 p-4">
             <p className="text-sm font-semibold text-slate-500">Picks Submitted</p>
-            <p className="mt-1 text-2xl font-black text-slate-900">{dashboard.currentWeek.submittedPicks} / {dashboard.currentWeek.expectedPicks}</p>
+            <p className={`mt-1 text-2xl font-black ${dashboard.currentWeek.complete ? "text-green-700" : "text-orange-700"}`}>
+              {dashboard.currentWeek.complete ? "All picks submitted" : `${dashboard.currentWeek.submittedPicks} / ${dashboard.currentWeek.expectedPicks}`}
+            </p>
             <div className="mt-4 divide-y divide-slate-200">
-              {dashboard.currentWeek.pickProgress.map((participant) => (
-                <div className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0" key={participant.id}>
-                  <span className="min-w-0 truncate font-semibold text-slate-700">{participant.displayName}</span>
-                  <span className="shrink-0 rounded bg-white px-2 py-1 text-sm font-black text-slate-900">
-                    {participant.submittedPicks} / {participant.expectedPicks}
-                  </span>
-                </div>
-              ))}
+              {dashboard.currentWeek.pickProgress.map((participant) => {
+                const picksSubmitted = participant.expectedPicks > 0 && participant.submittedPicks >= participant.expectedPicks;
+                return (
+                  <div className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0" key={participant.id}>
+                    <span className="min-w-0 truncate font-semibold text-slate-700">{participant.displayName}</span>
+                    <span className={`shrink-0 rounded bg-white px-2 py-1 text-sm font-black ${picksSubmitted ? "text-green-700" : "text-slate-900"}`}>
+                      {picksSubmitted ? "Picks Submitted" : `${participant.submittedPicks} / ${participant.expectedPicks}`}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
